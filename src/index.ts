@@ -1,9 +1,9 @@
-import axios, { AxiosRequestConfig, ResponseType } from "axios";
-import fs from "fs-extra";
-import { strict as assert } from "assert";
-import PromisePool from "@supercharge/promise-pool";
-import * as http from "http";
-import * as https from "https";
+import axios, { AxiosRequestConfig, ResponseType } from 'axios';
+import fs from 'fs-extra';
+import { strict as assert } from 'assert';
+import PromisePool from '@supercharge/promise-pool';
+import * as http from 'http';
+import * as https from 'https';
 
 const DEFAULT_CHUNK_SIZE = 16 * 1024 * 1024;
 const MIN_CHUNK_SIZE = 1024;
@@ -72,26 +72,26 @@ export default class TurboDownloader {
     };
     assert(
       this.options.chunkSize >= MIN_CHUNK_SIZE,
-      `Chunk size must be ${MIN_CHUNK_SIZE} or greater`
+      `Chunk size must be ${MIN_CHUNK_SIZE} or greater`,
     );
-    assert(this.options.concurrency >= 1, `Concurrency must be 1 or greater`);
-    assert(this.options.retryCount >= 0, `retryCount must be 0 or greater`);
+    assert(this.options.concurrency >= 1, 'Concurrency must be 1 or greater');
+    assert(this.options.retryCount >= 0, 'retryCount must be 0 or greater');
   }
 
   async download(
     progressCallback?: (
       downloaded: number,
       total: number,
-      plan: DownloadingPlan
-    ) => void
+      plan: DownloadingPlan,
+    ) => void,
   ) {
     if (this.started) {
-      throw new Error("Already started");
+      throw new Error('Already started');
     }
     this.started = true;
     const plan = await this.getDownloadingPlan();
     const chunksToDownload = plan.chunks.filter(
-      (chunk) => chunk.downloaded < chunk.size
+      (chunk) => chunk.downloaded < chunk.size,
     );
     try {
       await PromisePool.for(chunksToDownload)
@@ -115,12 +115,12 @@ export default class TurboDownloader {
                   if (plan.size > 0 && progressCallback) {
                     const downloaded = plan.chunks.reduce(
                       (sum, chunk) => sum + chunk.downloaded,
-                      0
+                      0,
                     );
                     progressCallback(downloaded, plan.size, plan);
                   }
                 },
-                (abort) => this.abortHandlers.push(abort)
+                (abort) => this.abortHandlers.push(abort),
               );
               return;
             } catch (e) {
@@ -158,7 +158,7 @@ export default class TurboDownloader {
   private async downloadChunk(
     chunk: DownloadingChunk,
     progressCallback: (chunk: DownloadingChunk) => void,
-    abortHandler: (abort: () => void) => void
+    abortHandler: (abort: () => void) => void,
   ) {
     const start = chunk.size > 0 ? chunk.disposition + chunk.downloaded : 0;
     const sizeLeft = chunk.size > 0 ? chunk.size - chunk.downloaded : -1;
@@ -166,7 +166,7 @@ export default class TurboDownloader {
     const options: AxiosRequestConfig = {
       httpAgent: this.httpAgent,
       httpsAgent: this.httpsAgent,
-      responseType: <ResponseType>"stream",
+      responseType: <ResponseType>'stream',
       cancelToken: cancelTokenSource.token,
     };
     if (sizeLeft > 0) {
@@ -174,28 +174,28 @@ export default class TurboDownloader {
     }
     const response = await axios.get(this.options.url, options);
     const stream = response.data;
-    const fd = await fs.open(this.options.destFile, "a");
+    const fd = await fs.open(this.options.destFile, 'a');
     try {
       await new Promise<void>((resolve, reject) => {
         abortHandler(() => {
           cancelTokenSource.cancel();
           resolve();
         });
-        stream.on("data", (buffer: Buffer) => {
+        stream.on('data', (buffer: Buffer) => {
           fs.writeSync(
             fd,
             buffer,
             0,
             buffer.length,
-            chunk.disposition + chunk.downloaded
+            chunk.disposition + chunk.downloaded,
           );
           chunk.downloaded += buffer.length;
           progressCallback(chunk);
         });
-        stream.on("error", (err: any) => {
+        stream.on('error', (err: any) => {
           reject(err);
         });
-        stream.on("end", () => {
+        stream.on('end', () => {
           resolve();
         });
       });
@@ -219,7 +219,7 @@ export default class TurboDownloader {
   private async readDownloadingPlanFromDisk(options: DownloadUrlOptions) {
     const fileName = this.getPlanFileName();
     if (fs.existsSync(fileName)) {
-      const data = await fs.readFile(this.getPlanFileName(), "utf8");
+      const data = await fs.readFile(this.getPlanFileName(), 'utf8');
       try {
         const plan = JSON.parse(data) as DownloadingPlan;
         if (
@@ -237,7 +237,7 @@ export default class TurboDownloader {
     fs.writeFileSync(
       this.getPlanFileName(),
       JSON.stringify(plan, null, 2),
-      "utf8"
+      'utf8',
     );
   }
 
@@ -275,9 +275,9 @@ export default class TurboDownloader {
       httpsAgent: this.httpsAgent,
     };
     const response = await axios.head(this.options.url, reqOptions);
-    const acceptRanges = response.headers["accept-ranges"] === "bytes";
-    const size = response.headers["content-length"]
-      ? parseInt(response.headers["content-length"])
+    const acceptRanges = response.headers['accept-ranges'] === 'bytes';
+    const size = response.headers['content-length']
+      ? parseInt(response.headers['content-length'])
       : -1;
     return {
       acceptRanges,
@@ -286,7 +286,7 @@ export default class TurboDownloader {
   }
 
   private async reserveSpace(options: DownloadUrlOptions) {
-    const fd = await fs.open(this.options.destFile, "a");
+    const fd = await fs.open(this.options.destFile, 'a');
     if (options.size > 0) {
       const buffer = Buffer.alloc(DEFAULT_CHUNK_SIZE).fill(0);
       let wrote = 0;
