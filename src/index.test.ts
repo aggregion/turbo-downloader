@@ -128,5 +128,3 @@ test('should correctly resume downloading', async () => {
     fs.unlinkSync(tempFile);
   }
 });
-
-
