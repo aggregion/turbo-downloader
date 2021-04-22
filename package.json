@@ -1,7 +1,7 @@
 {
   "name": "turbo-downloader",
   "author": "Denis Bezrukov <anthrax63@gmail.com>",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

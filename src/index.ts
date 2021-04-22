@@ -5,10 +5,6 @@ import PromisePool from '@supercharge/promise-pool';
 import * as http from 'http';
 import * as https from 'https';
 
-axios.defaults.adapter = require('axios/lib/adapters/http');
-
-
-
 const DEFAULT_CHUNK_SIZE = 16 * 1024 * 1024;
 const MIN_CHUNK_SIZE = 1024;
 const DEFAULT_CONCURRENCY = 4;
@@ -21,6 +17,7 @@ export interface TurboDownloaderOptions {
   concurrency: number;
   retryCount: number;
   canBeResumed: boolean;
+  adapter: any;
 }
 
 interface TurboDownloaderConstructorOptions {
@@ -30,6 +27,7 @@ interface TurboDownloaderConstructorOptions {
   concurrency?: number;
   retryCount?: number;
   canBeResumed?: boolean;
+  adapter?: any;
 }
 
 interface DownloadingChunk {
@@ -73,6 +71,7 @@ export default class TurboDownloader {
       concurrency: options.concurrency || DEFAULT_CONCURRENCY,
       retryCount: options.retryCount || DEFAULT_RETRY_COUNT,
       canBeResumed: options.canBeResumed || true,
+      adapter: options.adapter,
     };
     assert(
       this.options.chunkSize >= MIN_CHUNK_SIZE,
@@ -172,6 +171,7 @@ export default class TurboDownloader {
       httpsAgent: this.httpsAgent,
       responseType: <ResponseType>'stream',
       cancelToken: cancelTokenSource.token,
+      adapter: this.options.adapter
     };
     if (sizeLeft > 0) {
       options.headers = { range: `bytes=${start}-${start + sizeLeft - 1}` };
@@ -277,6 +277,7 @@ export default class TurboDownloader {
     const reqOptions = {
       httpAgent: this.httpAgent,
       httpsAgent: this.httpsAgent,
+      adapter: this.options.adapter,
     };
     const response = await axios.head(this.options.url, reqOptions);
     const acceptRanges = response.headers['accept-ranges'] === 'bytes';
