@@ -171,7 +171,7 @@ export default class TurboDownloader {
       httpsAgent: this.httpsAgent,
       responseType: <ResponseType>'stream',
       cancelToken: cancelTokenSource.token,
-      adapter: this.options.adapter
+      adapter: this.options.adapter,
     };
     if (sizeLeft > 0) {
       options.headers = { range: `bytes=${start}-${start + sizeLeft - 1}` };
