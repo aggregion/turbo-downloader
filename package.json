@@ -1,0 +1,32 @@
+{
+  "name": "turbo-downloader",
+  "author": "Denis Bezrukov <anthrax63@gmail.com>",
+  "version": "1.0.1",
+  "description": "",
+  "main": "dist/index.js",
+  "types": "dist/index.d.js",
+  "dependencies": {
+    "@supercharge/promise-pool": "^1.7.0",
+    "axios": "^0.21.1",
+    "fs-extra": "^9.1.0",
+    "nodemon": "^2.0.7",
+    "ts-node": "^9.1.1",
+    "typescript": "^4.2.4"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^9.0.11",
+    "@types/jest": "^26.0.22",
+    "@types/temp": "^0.9.0",
+    "jest": "^26.6.3",
+    "temp": "^0.9.4",
+    "ts-jest": "^26.5.5"
+  },
+  "scripts": {
+    "start": "ts-node index.ts",
+    "build": "tsc",
+    "test": "jest"
+  },
+  "keywords": ["download", "fast download", "partial download", "resumable download"],
+  "license": "ISC",
+  "repository": "https://github.com/aggregion/turbo-downloader.git"
+}
