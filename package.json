@@ -17,8 +17,14 @@
     "@types/fs-extra": "^9.0.11",
     "@types/jest": "^26.0.22",
     "@types/temp": "^0.9.0",
+    "@typescript-eslint/eslint-plugin": "^4.22.0",
+    "@typescript-eslint/parser": "^4.22.0",
+    "eslint": "^7.24.0",
+    "eslint-config-prettier": "^8.2.0",
+    "eslint-plugin-prettier": "^3.4.0",
     "husky": "^6.0.0",
     "jest": "^26.6.3",
+    "prettier": "^2.2.1",
     "temp": "^0.9.4",
     "ts-jest": "^26.5.5"
   },
@@ -27,7 +33,10 @@
     "build": "tsc",
     "prepare": "husky install",
     "prepublishOnly": "npm run build",
-    "test": "jest"
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix"
   },
   "keywords": [
     "download",
