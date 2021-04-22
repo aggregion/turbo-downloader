@@ -293,7 +293,7 @@ export default class TurboDownloader {
       while (wrote < options.size) {
         const sz = Math.min(buffer.length, options.size - wrote);
         if (sz > 0) {
-          fs.write(fd, buffer, 0, sz);
+          await fs.write(fd, buffer, 0, sz);
           wrote += sz;
         }
       }
