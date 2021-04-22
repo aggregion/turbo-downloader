@@ -5,6 +5,10 @@ import PromisePool from '@supercharge/promise-pool';
 import * as http from 'http';
 import * as https from 'https';
 
+axios.defaults.adapter = require('axios/lib/adapters/http');
+
+
+
 const DEFAULT_CHUNK_SIZE = 16 * 1024 * 1024;
 const MIN_CHUNK_SIZE = 1024;
 const DEFAULT_CONCURRENCY = 4;
