@@ -1,7 +1,7 @@
 {
   "name": "turbo-downloader",
   "author": "Denis Bezrukov <anthrax63@gmail.com>",
-  "version": "1.0.5",
+  "version": "1.0.8",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -32,7 +32,7 @@
     "start": "ts-node index.ts",
     "build": "tsc",
     "prepare": "husky install",
-    "prepublishOnly": "npm run build && cp package.json ./dist && cp README.md ./dist",
+    "prepublishOnly": "npm run build",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
@@ -47,6 +47,8 @@
   "license": "ISC",
   "repository": "https://github.com/aggregion/turbo-downloader.git",
   "files": [
-    "/dist"
+    "dist",
+    "package.json",
+    "README.md"
   ]
 }

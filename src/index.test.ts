@@ -90,12 +90,14 @@ test('should correctly aborting', async () => {
   try {
     await downloader.download((downloaded) => {
       if (downloaded >= 16000) {
-        downloader.abort();
+        downloader.abort(true);
       }
     });
     expect(checkMd5(tempFile, fileMd5)).toBeFalsy();
   } finally {
-    fs.unlinkSync(tempFile);
+    if (fs.existsSync(tempFile)) {
+      fs.unlinkSync(tempFile);
+    }
   }
 });
 

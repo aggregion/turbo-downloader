@@ -145,6 +145,9 @@ export default class TurboDownloader {
     if (!this.aborted || !this.abortSaveProgress) {
       fs.unlinkSync(this.getPlanFileName());
     }
+    if (this.aborted && !this.abortSaveProgress) {
+      fs.unlinkSync(this.options.destFile);
+    }
   }
 
   async abort(saveProgress = false) {
