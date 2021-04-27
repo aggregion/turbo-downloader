@@ -19,10 +19,11 @@ test('should download file correctly', async () => {
   const tempFile = temp.path({ suffix: '.png' });
   const downloader = new TurboDownloader({
     url: fileForTesting,
-    destFile: tempFile,
+    destFile: tempFile
   });
   try {
     await downloader.download();
+    expect(fs.lstatSync(tempFile).size).toEqual(fileSize);
     expect(checkMd5(tempFile, fileMd5)).toBeTruthy();
   } finally {
     fs.unlinkSync(tempFile);
@@ -52,6 +53,7 @@ test('should download file correctly using chunks', async () => {
   });
   try {
     await downloader.download();
+    expect(fs.lstatSync(tempFile).size).toEqual(fileSize);
     expect(checkMd5(tempFile, fileMd5)).toBeTruthy();
   } finally {
     fs.unlinkSync(tempFile);

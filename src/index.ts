@@ -181,7 +181,7 @@ export default class TurboDownloader {
     }
     const response = await axios.get(this.options.url, options);
     const stream = response.data;
-    const fd = await fs.open(this.options.destFile, 'a');
+    const fd = await fs.open(this.options.destFile, 'r+');
     try {
       await new Promise<void>((resolve, reject) => {
         abortHandler(() => {
@@ -207,7 +207,7 @@ export default class TurboDownloader {
         });
       });
     } finally {
-      fs.close(fd);
+      await fs.close(fd);
     }
   }
 
@@ -294,7 +294,7 @@ export default class TurboDownloader {
   }
 
   private async reserveSpace(options: DownloadUrlOptions) {
-    const fd = await fs.open(this.options.destFile, 'a');
+    const fd = await fs.open(this.options.destFile, 'w');
     if (options.size > 0) {
       const buffer = Buffer.alloc(DEFAULT_CHUNK_SIZE).fill(0);
       let wrote = 0;

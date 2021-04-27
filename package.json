@@ -1,7 +1,7 @@
 {
   "name": "turbo-downloader",
   "author": "Denis Bezrukov <anthrax63@gmail.com>",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -42,7 +42,9 @@
     "download",
     "fast download",
     "partial download",
-    "resumable download"
+    "resumable download",
+    "electron",
+    "typescript"
   ],
   "license": "ISC",
   "repository": "https://github.com/aggregion/turbo-downloader.git",
