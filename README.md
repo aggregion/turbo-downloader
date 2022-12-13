@@ -29,7 +29,8 @@ const downloader = new TurboDownloader({
     chunkSize: 16 * 1024 * 1024, // Size of chunk (default 16MB)
     concurrency: 8, // Number of connections (default 4)
     retryCount: 10, // Number of downloading retries of each chunk (default 10)
-    canBeResumed: true // If true, you can resume download next time if current download failed (downloader save .turbodownload file near destination file)
+    canBeResumed: true, // If true, you can resume download next time if current download failed (downloader save .turbodownload file near destination file)
+    transformStream: (stream: stream.Readable) => stream.Readable // Transform input data (decrypt, for example)
 });
 
 downloader
@@ -42,3 +43,13 @@ downloader
 downloader.abort(true /* if true, you can resume downloading next time (downloader save .turbodownload file near destination file) */);
 
 ```
+## Versions
+### 1.1.0
+
+#### New features
+
+1. By passing transformStream option you can transform input data on the fly (see tests for examples)
+
+#### Improvements
+1. All disk writes are made asynchronous
+2. Downloading plan file is not written if it is not necessary (canBeResumed = false)

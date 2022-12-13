@@ -4,9 +4,15 @@ import TurboDownloader from './index';
 import temp from 'temp';
 
 const fileForTesting =
-  'https://storage.aggregion.com/api/files/fb9ba718258d7e9b0e7bd6712c11557c6a21df8d5bad444d558fbd5f19b12114/shared/data';
-const fileMd5 = '0475eab3e8c07e3b084b2db500437f2e';
-const fileSize = 80185;
+  'http://speedtest.ftp.otenet.gr/files/test100k.db';
+const fileMd5 = '4c6426ac7ef186464ecbb0d81cbfcb1e';
+const fileSize = 102400;
+
+const file10mb = 'http://speedtest.ftp.otenet.gr/files/test10Mb.db';
+// const file10mbSize = 10485760;
+const file10mbMd5 = 'f1c9645dbc14efddc7d8a322685f26eb';
+
+// const file10gb = 'http://speedtest-sgp1.digitalocean.com/5gb.test';
 
 const checkMd5 = (fileName: string, hash: string) => {
   const data = fs.readFileSync(fileName);
@@ -15,11 +21,39 @@ const checkMd5 = (fileName: string, hash: string) => {
   return md5.digest('hex') === hash;
 };
 
+test('should correctly work with transform stream', async () => {
+  const key = crypto.randomBytes(32);
+  const iv = crypto.randomBytes(16);
+  const tempFile = temp.path({ suffix: '.png' });
+  const downloader = new TurboDownloader({
+    url: fileForTesting,
+    destFile: tempFile,
+    chunkSize: fileSize,
+    transformStream: (stream) => {
+      const cipher = crypto.createCipheriv('aes-256-ctr', key, iv);
+      return stream.pipe(cipher);
+    }
+  });
+  try {
+    await downloader.download();
+    expect(fs.lstatSync(tempFile).size).toEqual(fileSize);
+    const encryptedData = fs.readFileSync(tempFile);
+    const decipher = crypto.createDecipheriv('aes-256-ctr', key, iv);
+    const decryptedData = decipher.update(encryptedData);
+    const md5 = crypto.createHash('md5');
+    md5.update(decryptedData);
+    expect(md5.digest('hex')).toBe(fileMd5);
+  } finally {
+    fs.unlinkSync(tempFile);
+  }
+});
+
 test('should download file correctly', async () => {
   const tempFile = temp.path({ suffix: '.png' });
   const downloader = new TurboDownloader({
     url: fileForTesting,
-    destFile: tempFile
+    destFile: tempFile,
+    chunkSize: 4096
   });
   try {
     await downloader.download();
@@ -72,7 +106,7 @@ test('should correctly return progress', async () => {
     await downloader.download((downloaded, total) => {
       expect(total).toEqual(fileSize);
       expect(downloaded).toBeLessThanOrEqual(fileSize);
-      expect(downloaded).toBeGreaterThan(lastDownloaded);
+      expect(downloaded).toBeGreaterThanOrEqual(lastDownloaded);
       lastDownloaded = downloaded;
     });
     expect(checkMd5(tempFile, fileMd5)).toBeTruthy();
@@ -84,10 +118,11 @@ test('should correctly return progress', async () => {
 test('should correctly aborting', async () => {
   const tempFile = temp.path({ suffix: '.png' });
   const downloader = new TurboDownloader({
-    url: fileForTesting,
+    url: file10mb,
     destFile: tempFile,
-    chunkSize: 1024,
+    chunkSize: 16 * 1024,
     concurrency: 8,
+    fillFileByte: 1
   });
   try {
     await downloader.download((downloaded) => {
@@ -95,7 +130,7 @@ test('should correctly aborting', async () => {
         downloader.abort(true);
       }
     });
-    expect(checkMd5(tempFile, fileMd5)).toBeFalsy();
+    expect(checkMd5(tempFile, file10mbMd5)).toBeFalsy();
   } finally {
     if (fs.existsSync(tempFile)) {
       fs.unlinkSync(tempFile);
@@ -110,6 +145,7 @@ test('should correctly resume downloading', async () => {
     destFile: tempFile,
     chunkSize: 4096,
     concurrency: 8,
+    fillFileByte: 1
   });
   try {
     await downloader.download((downloaded) => {
@@ -124,9 +160,7 @@ test('should correctly resume downloading', async () => {
       chunkSize: 4096,
       concurrency: 8,
     });
-    await downloader2.download((downloaded) => {
-      expect(downloaded).toBeGreaterThan(16000);
-    });
+    await downloader2.download();
     expect(checkMd5(tempFile, fileMd5)).toBeTruthy();
   } finally {
     fs.unlinkSync(tempFile);

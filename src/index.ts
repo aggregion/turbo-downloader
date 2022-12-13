@@ -4,6 +4,7 @@ import { strict as assert } from 'assert';
 import PromisePool from '@supercharge/promise-pool';
 import * as http from 'http';
 import * as https from 'https';
+import * as stream from 'stream';
 
 const DEFAULT_CHUNK_SIZE = 16 * 1024 * 1024;
 const MIN_CHUNK_SIZE = 1024;
@@ -18,6 +19,8 @@ export interface TurboDownloaderOptions {
   retryCount: number;
   canBeResumed: boolean;
   adapter: any;
+  fillFileByte: number;
+  transformStream?: (stream: stream.Readable) => stream.Readable;
 }
 
 interface TurboDownloaderConstructorOptions {
@@ -28,6 +31,8 @@ interface TurboDownloaderConstructorOptions {
   retryCount?: number;
   canBeResumed?: boolean;
   adapter?: any;
+  fillFileByte?: number;
+  transformStream?: (stream: stream.Readable) => stream.Readable;
 }
 
 interface DownloadingChunk {
@@ -72,6 +77,8 @@ export default class TurboDownloader {
       retryCount: options.retryCount || DEFAULT_RETRY_COUNT,
       canBeResumed: options.canBeResumed || true,
       adapter: options.adapter,
+      fillFileByte: options.fillFileByte || 0,
+      transformStream: options.transformStream,
     };
     assert(
       this.options.chunkSize >= MIN_CHUNK_SIZE,
@@ -114,7 +121,9 @@ export default class TurboDownloader {
                 chunk,
                 (newChunk) => {
                   chunk.downloaded = newChunk.downloaded;
-                  this.saveDownloadingPlanToDisk(plan);
+                  if (this.options.canBeResumed) {
+                    this.saveDownloadingPlanToDisk(plan);
+                  }
                   if (plan.size > 0 && progressCallback) {
                     const downloaded = plan.chunks.reduce(
                       (sum, chunk) => sum + chunk.downloaded,
@@ -138,15 +147,15 @@ export default class TurboDownloader {
         });
     } catch (e) {
       if (!this.options.canBeResumed) {
-        fs.unlinkSync(this.getPlanFileName());
+        this.deletePlanFromDisk();
       }
       throw e;
     }
-    if (!this.aborted || !this.abortSaveProgress) {
-      fs.unlinkSync(this.getPlanFileName());
-    }
-    if (this.aborted && !this.abortSaveProgress) {
-      fs.unlinkSync(this.options.destFile);
+    if (!this.abortSaveProgress) {
+      this.deletePlanFromDisk();
+      if (this.aborted) {
+        fs.unlinkSync(this.options.destFile);
+      }
     }
   }
 
@@ -158,6 +167,13 @@ export default class TurboDownloader {
     this.abortSaveProgress = saveProgress;
     for (const handler of this.abortHandlers) {
       handler();
+    }
+  }
+
+  private deletePlanFromDisk() {
+    const fileName = this.getPlanFileName();
+    if (fs.existsSync(fileName)) {
+      fs.unlinkSync(fileName);
     }
   }
 
@@ -180,7 +196,10 @@ export default class TurboDownloader {
       options.headers = { range: `bytes=${start}-${start + sizeLeft - 1}` };
     }
     const response = await axios.get(this.options.url, options);
-    const stream = response.data;
+    const responseStream = response.data;
+    const stream = this.options.transformStream
+      ? this.options.transformStream(responseStream)
+      : response.data;
     const fd = await fs.open(this.options.destFile, 'r+');
     try {
       await new Promise<void>((resolve, reject) => {
@@ -188,15 +207,18 @@ export default class TurboDownloader {
           cancelTokenSource.cancel();
           resolve();
         });
-        stream.on('data', (buffer: Buffer) => {
-          fs.writeSync(
+        stream.on('data', async (buffer: Buffer) => {
+          const dl = chunk.downloaded;
+          chunk.downloaded += buffer.length;
+          stream.pause();
+          await fs.write(
             fd,
             buffer,
             0,
             buffer.length,
-            chunk.disposition + chunk.downloaded,
+            chunk.disposition + dl,
           );
-          chunk.downloaded += buffer.length;
+          stream.resume();
           progressCallback(chunk);
         });
         stream.on('error', (err: any) => {
@@ -256,9 +278,8 @@ export default class TurboDownloader {
     if (plan.acceptRanges && plan.size && plan.size > 0) {
       const chunkSize = this.options.chunkSize;
       const chunksCount = Math.ceil(plan.size / chunkSize);
-      const lastChunkSize = plan.size % chunkSize;
       for (let i = 0; i < chunksCount; i++) {
-        const size = i === chunksCount - 1 ? lastChunkSize : chunkSize;
+        const size = i === chunksCount - 1 ? plan.size - chunkSize * i : chunkSize;
         plan.chunks.push({
           size,
           disposition: i * chunkSize,
@@ -296,7 +317,7 @@ export default class TurboDownloader {
   private async reserveSpace(options: DownloadUrlOptions) {
     const fd = await fs.open(this.options.destFile, 'w');
     if (options.size > 0) {
-      const buffer = Buffer.alloc(DEFAULT_CHUNK_SIZE).fill(0);
+      const buffer = Buffer.alloc(DEFAULT_CHUNK_SIZE).fill(this.options.fillFileByte);
       let wrote = 0;
       while (wrote < options.size) {
         const sz = Math.min(buffer.length, options.size - wrote);
