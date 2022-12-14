@@ -238,7 +238,7 @@ export default class TurboDownloader extends (EventEmitter as unknown as new () 
     const fd = await fs.open(this.options.destFile, 'r+');
     try {
       await new Promise<void>((resolve, reject) => {
-        abortHandler( () => {
+        abortHandler(() => {
           responseStream.pause();
           cancelTokenSource.cancel();
           resolve();
@@ -248,7 +248,13 @@ export default class TurboDownloader extends (EventEmitter as unknown as new () 
           const dl = chunk.downloaded;
           chunk.downloaded += buffer.length;
           this.emit('chunkDownloadProgress', chunk);
-          writePromise =  fs.write(fd, buffer, 0, buffer.length, chunk.disposition + dl);
+          writePromise = fs.write(
+            fd,
+            buffer,
+            0,
+            buffer.length,
+            chunk.disposition + dl,
+          );
           await writePromise;
           stream.resume();
           progressCallback(chunk);
