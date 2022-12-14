@@ -37,6 +37,9 @@ test.skip('should be no loss of performance with transform stream', async () => 
         return stream.pipe(cipher);
       },
     });
+    downloader1.on('chunkDownloadStarted', (chunk) => {
+      console.log('Chunk started', chunk.disposition);
+    });
     const downloader2 = new TurboDownloader({
       url: file10mb,
       destFile: tempFile2,

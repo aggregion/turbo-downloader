@@ -5,7 +5,7 @@ import PromisePool from '@supercharge/promise-pool';
 import * as http from 'http';
 import * as https from 'https';
 import * as stream from 'stream';
-import TypedEmitter from 'typed-emitter/rxjs';
+import TypedEmitter from 'typed-emitter';
 import EventEmitter from 'events';
 
 const DEFAULT_CHUNK_SIZE = 16 * 1024 * 1024;
