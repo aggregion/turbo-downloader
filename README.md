@@ -43,7 +43,53 @@ downloader
 downloader.abort(true /* if true, you can resume downloading next time (downloader save .turbodownload file near destination file) */);
 
 ```
+
+## Events
+
+TurboDownloader class implements EventEmitter interface with next events:
+
+```
+  downloadStarted: (url: string, destination: string) => void,
+  downloadFinished: (url: string, destination: string) => void,
+  downloadError: (url: string, destination: string) => void,
+  chunkDownloadStarted: (chunk: DownloadingChunk, attemptNumber: number) => void,
+  chunkDownloadProgress: (chunk: DownloadingChunk) => void,
+  chunkDownloadFinished: (chunk: DownloadingChunk, attemptNumber: number) => void,
+  chunkDownloadError: (chunk: DownloadingChunk, attemptNumber: number, error: any) => void,
+  planReady: (plan: DownloadingPlan) => void,
+  aborted: () => void,
+  reservingSpaceStarted: (size: number) => void,
+  reservingSpaceFinished: (size: number) => void,
+```
+
+Example:
+
+```typescript
+const downloader = new TurboDownloader({
+    url: 'https://example.com/my_file',
+    destFile: '/some/path/to/save',
+    chunkSize: 16 * 1024 * 1024, // Size of chunk (default 16MB)
+    concurrency: 8, // Number of connections (default 4)
+    retryCount: 10, // Number of downloading retries of each chunk (default 10)
+    canBeResumed: true, // If true, you can resume download next time if current download failed (downloader save .turbodownload file near destination file)
+    transformStream: (stream: stream.Readable) => stream.Readable // Transform input data (decrypt, for example)
+});
+
+downloader.on('chunkDownloadStarted', (chunk) => {
+  console.log('Start chunk downloading', chunk.disposition);
+});
+
+await downloader.download();
+```
+
 ## Versions
+
+### 1.2.0
+
+#### New features
+
+1. Added events
+
 ### 1.1.0
 
 #### New features

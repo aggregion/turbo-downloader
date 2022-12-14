@@ -3,8 +3,7 @@ import * as crypto from 'crypto';
 import TurboDownloader from './index';
 import temp from 'temp';
 
-const fileForTesting =
-  'http://speedtest.ftp.otenet.gr/files/test100k.db';
+const fileForTesting = 'http://speedtest.ftp.otenet.gr/files/test100k.db';
 const fileMd5 = '4c6426ac7ef186464ecbb0d81cbfcb1e';
 const fileSize = 102400;
 
@@ -12,7 +11,7 @@ const file10mb = 'http://speedtest.ftp.otenet.gr/files/test10Mb.db';
 // const file10mbSize = 10485760;
 const file10mbMd5 = 'f1c9645dbc14efddc7d8a322685f26eb';
 
-// const file10gb = 'http://speedtest-sgp1.digitalocean.com/5gb.test';
+//const file10gb = 'http://speedtest-sgp1.digitalocean.com/5gb.test';
 
 const checkMd5 = (fileName: string, hash: string) => {
   const data = fs.readFileSync(fileName);
@@ -20,6 +19,54 @@ const checkMd5 = (fileName: string, hash: string) => {
   md5.update(data);
   return md5.digest('hex') === hash;
 };
+
+test.skip('should be no loss of performance with transform stream', async () => {
+  const key = crypto.randomBytes(32);
+  const iv = crypto.randomBytes(16);
+  let dSum = 0;
+  const testsCount = 5;
+  for (let i = 0; i < testsCount; i++) {
+    const tempFile1 = temp.path({ suffix: '.png' });
+    const tempFile2 = temp.path({ suffix: '.png' });
+    const downloader1 = new TurboDownloader({
+      url: file10mb,
+      destFile: tempFile1,
+      chunkSize: 1024 * 1024,
+      transformStream: (stream) => {
+        const cipher = crypto.createCipheriv('aes-256-ctr', key, iv);
+        return stream.pipe(cipher);
+      },
+    });
+    const downloader2 = new TurboDownloader({
+      url: file10mb,
+      destFile: tempFile2,
+      chunkSize: 1024 * 1024,
+      transformStream: (stream) => {
+        const cipher = crypto.createCipheriv('aes-256-ctr', key, iv);
+        return stream.pipe(cipher);
+      },
+    });
+    try {
+      let startTime = new Date().getTime();
+      await downloader1.download();
+      const d1Time = new Date().getTime() - startTime;
+      try {
+        startTime = new Date().getTime();
+        await downloader2.download();
+        const d2Time = new Date().getTime() - startTime;
+        const d = Math.abs(d2Time - d1Time) * 2 / (d1Time + d2Time);
+        dSum += d;
+        // console.log(d1Time, d2Time);
+      } finally {
+        fs.unlinkSync(tempFile2);
+      }
+    } finally {
+      fs.unlinkSync(tempFile1);
+    }
+  }
+  // console.log(dSum / testsCount);
+  expect(dSum / testsCount).toBeLessThan(0.2);
+}, 300000);
 
 test('should correctly work with transform stream', async () => {
   const key = crypto.randomBytes(32);
@@ -32,7 +79,7 @@ test('should correctly work with transform stream', async () => {
     transformStream: (stream) => {
       const cipher = crypto.createCipheriv('aes-256-ctr', key, iv);
       return stream.pipe(cipher);
-    }
+    },
   });
   try {
     await downloader.download();
@@ -53,7 +100,7 @@ test('should download file correctly', async () => {
   const downloader = new TurboDownloader({
     url: fileForTesting,
     destFile: tempFile,
-    chunkSize: 4096
+    chunkSize: 4096,
   });
   try {
     await downloader.download();
@@ -122,7 +169,7 @@ test('should correctly aborting', async () => {
     destFile: tempFile,
     chunkSize: 16 * 1024,
     concurrency: 8,
-    fillFileByte: 1
+    fillFileByte: 1,
   });
   try {
     await downloader.download((downloaded) => {
@@ -145,7 +192,7 @@ test('should correctly resume downloading', async () => {
     destFile: tempFile,
     chunkSize: 4096,
     concurrency: 8,
-    fillFileByte: 1
+    fillFileByte: 1,
   });
   try {
     await downloader.download((downloaded) => {
