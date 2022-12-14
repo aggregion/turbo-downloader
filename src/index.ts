@@ -5,7 +5,7 @@ import PromisePool from '@supercharge/promise-pool';
 import * as http from 'http';
 import * as https from 'https';
 import * as stream from 'stream';
-import TypedEmitter from "typed-emitter/rxjs";
+import TypedEmitter from 'typed-emitter/rxjs';
 import EventEmitter from 'events';
 
 const DEFAULT_CHUNK_SIZE = 16 * 1024 * 1024;
@@ -53,18 +53,28 @@ type DownloadingPlan = DownloadUrlOptions & {
 };
 
 type Events = {
-  downloadStarted: (url: string, destination: string) => void,
-  downloadFinished: (url: string, destination: string) => void,
-  downloadError: (url: string, destination: string) => void,
-  chunkDownloadStarted: (chunk: DownloadingChunk, attemptNumber: number) => void,
-  chunkDownloadProgress: (chunk: DownloadingChunk) => void,
-  chunkDownloadFinished: (chunk: DownloadingChunk, attemptNumber: number) => void,
-  chunkDownloadError: (chunk: DownloadingChunk, attemptNumber: number, error: any) => void,
-  planReady: (plan: DownloadingPlan) => void,
-  aborted: () => void,
-  reservingSpaceStarted: (size: number) => void,
-  reservingSpaceFinished: (size: number) => void,
-}
+  downloadStarted: (url: string, destination: string) => void;
+  downloadFinished: (url: string, destination: string) => void;
+  downloadError: (url: string, destination: string) => void;
+  chunkDownloadStarted: (
+    chunk: DownloadingChunk,
+    attemptNumber: number,
+  ) => void;
+  chunkDownloadProgress: (chunk: DownloadingChunk) => void;
+  chunkDownloadFinished: (
+    chunk: DownloadingChunk,
+    attemptNumber: number,
+  ) => void;
+  chunkDownloadError: (
+    chunk: DownloadingChunk,
+    attemptNumber: number,
+    error: any,
+  ) => void;
+  planReady: (plan: DownloadingPlan) => void;
+  aborted: () => void;
+  reservingSpaceStarted: (size: number) => void;
+  reservingSpaceFinished: (size: number) => void;
+};
 
 export default class TurboDownloader extends (EventEmitter as unknown as new () => TypedEmitter<Events>) {
   protected options: TurboDownloaderOptions;

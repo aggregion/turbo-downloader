@@ -54,7 +54,7 @@ test.skip('should be no loss of performance with transform stream', async () => 
         startTime = new Date().getTime();
         await downloader2.download();
         const d2Time = new Date().getTime() - startTime;
-        const d = Math.abs(d2Time - d1Time) * 2 / (d1Time + d2Time);
+        const d = (Math.abs(d2Time - d1Time) * 2) / (d1Time + d2Time);
         dSum += d;
         // console.log(d1Time, d2Time);
       } finally {
