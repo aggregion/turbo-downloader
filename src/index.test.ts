@@ -32,6 +32,7 @@ test.skip('should be no loss of performance with transform stream', async () => 
       url: file10mb,
       destFile: tempFile1,
       chunkSize: 1024 * 1024,
+      fillFileByte: 1,
       transformStream: (stream) => {
         const cipher = crypto.createCipheriv('aes-256-ctr', key, iv);
         return stream.pipe(cipher);
@@ -48,6 +49,7 @@ test.skip('should be no loss of performance with transform stream', async () => 
         const cipher = crypto.createCipheriv('aes-256-ctr', key, iv);
         return stream.pipe(cipher);
       },
+      fillFileByte: 1
     });
     try {
       let startTime = new Date().getTime();
@@ -83,6 +85,7 @@ test('should correctly work with transform stream', async () => {
       const cipher = crypto.createCipheriv('aes-256-ctr', key, iv);
       return stream.pipe(cipher);
     },
+    fillFileByte: 1
   });
   try {
     await downloader.download();
@@ -104,6 +107,7 @@ test('should download file correctly', async () => {
     url: fileForTesting,
     destFile: tempFile,
     chunkSize: 4096,
+    fillFileByte: 1
   });
   try {
     await downloader.download();
@@ -134,6 +138,7 @@ test('should download file correctly using chunks', async () => {
     url: fileForTesting,
     destFile: tempFile,
     chunkSize: 32000,
+    fillFileByte: 1,
   });
   try {
     await downloader.download();
@@ -150,6 +155,7 @@ test('should correctly return progress', async () => {
     url: fileForTesting,
     destFile: tempFile,
     chunkSize: 32000,
+    fillFileByte: 1,
   });
   try {
     let lastDownloaded = 0;
@@ -209,6 +215,7 @@ test('should correctly resume downloading', async () => {
       destFile: tempFile,
       chunkSize: 4096,
       concurrency: 8,
+      fillFileByte: 1,
     });
     await downloader2.download();
     expect(checkMd5(tempFile, fileMd5)).toBeTruthy();

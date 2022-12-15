@@ -84,6 +84,13 @@ await downloader.download();
 
 ## Versions
 
+### 1.3.0
+
+#### Improvements
+
+Move to 'node:fs/promises' API
+
+
 ### 1.2.0
 
 #### New features

@@ -1,6 +1,7 @@
-import axios, { AxiosRequestConfig, ResponseType } from 'axios';
-import fs from 'fs-extra';
-import { strict as assert } from 'assert';
+import axios, {AxiosRequestConfig, ResponseType} from 'axios';
+import fsp from 'node:fs/promises';
+import fs from 'node:fs';
+import {strict as assert} from 'assert';
 import PromisePool from '@supercharge/promise-pool';
 import * as http from 'http';
 import * as https from 'https';
@@ -180,14 +181,14 @@ export default class TurboDownloader extends (EventEmitter as unknown as new () 
     } catch (e) {
       this.emit('downloadError', this.options.url, this.options.destFile);
       if (!this.options.canBeResumed) {
-        this.deletePlanFromDisk();
+        await this.deletePlanFromDisk();
       }
       throw e;
     }
     if (!this.abortSaveProgress) {
-      this.deletePlanFromDisk();
+      await this.deletePlanFromDisk();
       if (this.aborted) {
-        fs.unlinkSync(this.options.destFile);
+        await fsp.unlink(this.options.destFile);
       }
     }
   }
@@ -204,10 +205,10 @@ export default class TurboDownloader extends (EventEmitter as unknown as new () 
     }
   }
 
-  private deletePlanFromDisk() {
+  private async deletePlanFromDisk() {
     const fileName = this.getPlanFileName();
     if (fs.existsSync(fileName)) {
-      fs.unlinkSync(fileName);
+      await fsp.unlink(fileName);
     }
   }
 
@@ -227,54 +228,32 @@ export default class TurboDownloader extends (EventEmitter as unknown as new () 
       adapter: this.options.adapter,
     };
     if (sizeLeft > 0) {
-      options.headers = { range: `bytes=${start}-${start + sizeLeft - 1}` };
+      options.headers = {range: `bytes=${start}-${start + sizeLeft - 1}`};
     }
     const response = await axios.get(this.options.url, options);
     const responseStream = response.data;
     const stream = this.options.transformStream
       ? this.options.transformStream(responseStream)
       : responseStream;
-    let writePromise: undefined | Promise<any>;
-    const fd = await fs.open(this.options.destFile, 'r+');
-    try {
-      await new Promise<void>((resolve, reject) => {
-        abortHandler(() => {
-          responseStream.pause();
-          cancelTokenSource.cancel();
-          resolve();
-        });
-        stream.on('data', async (buffer: Buffer) => {
-          stream.pause();
-          const dl = chunk.downloaded;
-          chunk.downloaded += buffer.length;
-          this.emit('chunkDownloadProgress', chunk);
-          writePromise = fs.write(
-            fd,
-            buffer,
-            0,
-            buffer.length,
-            chunk.disposition + dl,
-          );
-          await writePromise;
-          stream.resume();
-          progressCallback(chunk);
-        });
-        stream.on('error', (err: any) => {
-          reject(err);
-        });
-        stream.on('end', () => {
-          resolve();
-        });
+    const fd = await fsp.open(this.options.destFile, 'r+');
+    const fileStream = fd.createWriteStream({start: chunk.disposition});
+    await new Promise<void>((resolve, reject) => {
+      abortHandler(() => {
+        cancelTokenSource.cancel();
       });
-    } finally {
-      if (writePromise) {
-        await writePromise;
-      }
-      if (!responseStream.destroyed) {
-        responseStream.destroy();
-      }
-      await fs.close(fd);
-    }
+      stream.on('data', async (buffer: Buffer) => {
+        chunk.downloaded += buffer.length;
+        this.emit('chunkDownloadProgress', chunk);
+        progressCallback(chunk);
+      });
+      stream.on('error', (err: any) => {
+        reject(err);
+      });
+      stream.pipe(fileStream);
+      fileStream.on('close', () => {
+        resolve();
+      });
+    });
   }
 
   private async getDownloadingPlan() {
@@ -292,7 +271,7 @@ export default class TurboDownloader extends (EventEmitter as unknown as new () 
   private async readDownloadingPlanFromDisk(options: DownloadUrlOptions) {
     const fileName = this.getPlanFileName();
     if (fs.existsSync(fileName)) {
-      const data = await fs.readFile(this.getPlanFileName(), 'utf8');
+      const data = await fsp.readFile(this.getPlanFileName(), 'utf8');
       try {
         const plan = JSON.parse(data) as DownloadingPlan;
         if (
@@ -301,7 +280,8 @@ export default class TurboDownloader extends (EventEmitter as unknown as new () 
         ) {
           return plan;
         }
-      } catch (e) {}
+      } catch (e) {
+      }
     }
     return null;
   }
@@ -362,7 +342,7 @@ export default class TurboDownloader extends (EventEmitter as unknown as new () 
   }
 
   private async reserveSpace(options: DownloadUrlOptions) {
-    const fd = await fs.open(this.options.destFile, 'w');
+    const fd = await fsp.open(this.options.destFile, 'w');
     if (options.size > 0) {
       const buffer = Buffer.alloc(DEFAULT_CHUNK_SIZE).fill(
         this.options.fillFileByte,
@@ -371,11 +351,11 @@ export default class TurboDownloader extends (EventEmitter as unknown as new () 
       while (wrote < options.size) {
         const sz = Math.min(buffer.length, options.size - wrote);
         if (sz > 0) {
-          await fs.write(fd, buffer, 0, sz);
+          await fd.write(buffer, 0, sz);
           wrote += sz;
         }
       }
     }
-    await fs.close(fd);
+    await fd.close();
   }
 }
