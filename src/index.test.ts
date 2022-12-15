@@ -26,30 +26,25 @@ test.skip('should be no loss of performance with transform stream', async () => 
   let dSum = 0;
   const testsCount = 5;
   for (let i = 0; i < testsCount; i++) {
-    const tempFile1 = temp.path({ suffix: '.png' });
+    const tempFile1 = '/dev/null';
     const tempFile2 = temp.path({ suffix: '.png' });
     const downloader1 = new TurboDownloader({
       url: file10mb,
       destFile: tempFile1,
+      canBeResumed: false,
       chunkSize: 1024 * 1024,
       fillFileByte: 1,
-      transformStream: (stream) => {
-        const cipher = crypto.createCipheriv('aes-256-ctr', key, iv);
-        return stream.pipe(cipher);
-      },
-    });
-    downloader1.on('chunkDownloadStarted', (chunk) => {
-      console.log('Chunk started', chunk.disposition);
     });
     const downloader2 = new TurboDownloader({
       url: file10mb,
       destFile: tempFile2,
+      canBeResumed: false,
       chunkSize: 1024 * 1024,
       transformStream: (stream) => {
         const cipher = crypto.createCipheriv('aes-256-ctr', key, iv);
         return stream.pipe(cipher);
       },
-      fillFileByte: 1
+      fillFileByte: 1,
     });
     try {
       let startTime = new Date().getTime();
@@ -61,7 +56,7 @@ test.skip('should be no loss of performance with transform stream', async () => 
         const d2Time = new Date().getTime() - startTime;
         const d = (Math.abs(d2Time - d1Time) * 2) / (d1Time + d2Time);
         dSum += d;
-        // console.log(d1Time, d2Time);
+        console.log(d1Time, d2Time);
       } finally {
         fs.unlinkSync(tempFile2);
       }
@@ -85,7 +80,7 @@ test('should correctly work with transform stream', async () => {
       const cipher = crypto.createCipheriv('aes-256-ctr', key, iv);
       return stream.pipe(cipher);
     },
-    fillFileByte: 1
+    fillFileByte: 1,
   });
   try {
     await downloader.download();
@@ -107,7 +102,7 @@ test('should download file correctly', async () => {
     url: fileForTesting,
     destFile: tempFile,
     chunkSize: 4096,
-    fillFileByte: 1
+    fillFileByte: 1,
   });
   try {
     await downloader.download();

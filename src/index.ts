@@ -1,7 +1,7 @@
-import axios, {AxiosRequestConfig, ResponseType} from 'axios';
+import axios, { AxiosRequestConfig, ResponseType } from 'axios';
 import fsp from 'node:fs/promises';
 import fs from 'node:fs';
-import {strict as assert} from 'assert';
+import { strict as assert } from 'assert';
 import PromisePool from '@supercharge/promise-pool';
 import * as http from 'http';
 import * as https from 'https';
@@ -103,7 +103,7 @@ export default class TurboDownloader extends (EventEmitter as unknown as new () 
       chunkSize: options.chunkSize || DEFAULT_CHUNK_SIZE,
       concurrency: options.concurrency || DEFAULT_CONCURRENCY,
       retryCount: options.retryCount || DEFAULT_RETRY_COUNT,
-      canBeResumed: options.canBeResumed || true,
+      canBeResumed: options.canBeResumed ?? true,
       adapter: options.adapter,
       fillFileByte: options.fillFileByte || 0,
       transformStream: options.transformStream,
@@ -228,7 +228,7 @@ export default class TurboDownloader extends (EventEmitter as unknown as new () 
       adapter: this.options.adapter,
     };
     if (sizeLeft > 0) {
-      options.headers = {range: `bytes=${start}-${start + sizeLeft - 1}`};
+      options.headers = { range: `bytes=${start}-${start + sizeLeft - 1}` };
     }
     const response = await axios.get(this.options.url, options);
     const responseStream = response.data;
@@ -236,7 +236,7 @@ export default class TurboDownloader extends (EventEmitter as unknown as new () 
       ? this.options.transformStream(responseStream)
       : responseStream;
     const fd = await fsp.open(this.options.destFile, 'r+');
-    const fileStream = fd.createWriteStream({start: chunk.disposition});
+    const fileStream = fd.createWriteStream({ start: chunk.disposition });
     await new Promise<void>((resolve, reject) => {
       abortHandler(() => {
         cancelTokenSource.cancel();
@@ -280,8 +280,7 @@ export default class TurboDownloader extends (EventEmitter as unknown as new () 
         ) {
           return plan;
         }
-      } catch (e) {
-      }
+      } catch (e) {}
     }
     return null;
   }
