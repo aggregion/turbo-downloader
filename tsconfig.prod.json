@@ -3,11 +3,17 @@
     "target": "es6",
     "module": "esnext",
     "declaration": true,
-    "sourceMap": true,
+    "sourceMap": false,
     "outDir": "dist",
     "rootDir": "./src",
     "strict": true,
     "esModuleInterop": true,
     "moduleResolution": "Node"
-  }
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "src/**/*.test.ts"
+  ]
 }
