@@ -2,7 +2,7 @@ import axios, { AxiosRequestConfig, ResponseType } from 'axios';
 import fsp from 'node:fs/promises';
 import fs from 'node:fs';
 import { strict as assert } from 'assert';
-import PromisePool from '@supercharge/promise-pool';
+import { PromisePool } from '@supercharge/promise-pool';
 import * as http from 'http';
 import * as https from 'https';
 import * as stream from 'stream';
