@@ -24,10 +24,10 @@ test.skip('should be no loss of performance with transform stream', async () => 
   const key = crypto.randomBytes(32);
   const iv = crypto.randomBytes(16);
   let dSum = 0;
-  const testsCount = 5;
+  const testsCount = 1;
   for (let i = 0; i < testsCount; i++) {
-    const tempFile1 = '/dev/null';
-    const tempFile2 = temp.path({ suffix: '.png' });
+    const tempFile1 = temp.path({suffix: '.png'});
+    const tempFile2 = temp.path({suffix: '.png'});
     const downloader1 = new TurboDownloader({
       url: file10mb,
       destFile: tempFile1,
@@ -71,7 +71,7 @@ test.skip('should be no loss of performance with transform stream', async () => 
 test('should correctly work with transform stream', async () => {
   const key = crypto.randomBytes(32);
   const iv = crypto.randomBytes(16);
-  const tempFile = temp.path({ suffix: '.png' });
+  const tempFile = temp.path({suffix: '.png'});
   const downloader = new TurboDownloader({
     url: fileForTesting,
     destFile: tempFile,
@@ -97,7 +97,7 @@ test('should correctly work with transform stream', async () => {
 });
 
 test('should download file correctly', async () => {
-  const tempFile = temp.path({ suffix: '.png' });
+  const tempFile = temp.path({suffix: '.png'});
   const downloader = new TurboDownloader({
     url: fileForTesting,
     destFile: tempFile,
@@ -114,7 +114,7 @@ test('should download file correctly', async () => {
 });
 
 test('should remove plan file', async () => {
-  const tempFile = temp.path({ suffix: '.png' });
+  const tempFile = temp.path({suffix: '.png'});
   const downloader = new TurboDownloader({
     url: fileForTesting,
     destFile: tempFile,
@@ -128,7 +128,7 @@ test('should remove plan file', async () => {
 });
 
 test('should download file correctly using chunks', async () => {
-  const tempFile = temp.path({ suffix: '.png' });
+  const tempFile = temp.path({suffix: '.png'});
   const downloader = new TurboDownloader({
     url: fileForTesting,
     destFile: tempFile,
@@ -145,7 +145,7 @@ test('should download file correctly using chunks', async () => {
 });
 
 test('should correctly return progress', async () => {
-  const tempFile = temp.path({ suffix: '.png' });
+  const tempFile = temp.path({suffix: '.png'});
   const downloader = new TurboDownloader({
     url: fileForTesting,
     destFile: tempFile,
@@ -167,7 +167,7 @@ test('should correctly return progress', async () => {
 });
 
 test('should correctly aborting', async () => {
-  const tempFile = temp.path({ suffix: '.png' });
+  const tempFile = temp.path({suffix: '.png'});
   const downloader = new TurboDownloader({
     url: file10mb,
     destFile: tempFile,
@@ -190,7 +190,7 @@ test('should correctly aborting', async () => {
 });
 
 test('should correctly resume downloading', async () => {
-  const tempFile = temp.path({ suffix: '.png' });
+  const tempFile = temp.path({suffix: '.png'});
   const downloader = new TurboDownloader({
     url: fileForTesting,
     destFile: tempFile,
